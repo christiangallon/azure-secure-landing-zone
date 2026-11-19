@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "hashicorp.terraform",
+    "ms-azuretools.vscode-azureterraform",
+    "github.vscode-github-actions",
+    "ms-azure-devops.azure-pipelines"
+  ]
+}

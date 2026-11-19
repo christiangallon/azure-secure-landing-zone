@@ -1,0 +1,5 @@
+# Code owners are requested for review automatically on every PR.
+# Replace/add GitHub usernames or teams as the project grows.
+*                       @christiangallon
+/modules/identity/      @christiangallon
+/.github/workflows/     @christiangallon

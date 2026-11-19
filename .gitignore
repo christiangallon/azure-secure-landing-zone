@@ -1,0 +1,45 @@
+# Terraform working directories
+**/.terraform/
+.tflint.d/
+
+# State files - remote state lives in Azure Storage (bootstrap/)
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+plan.txt
+
+# Variable files may contain personal values - only examples are committed
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# Backend config (real values) - only the example is committed
+backend.hcl
+!backend.hcl.example
+
+# Crash logs and overrides
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# NOTE: .terraform.lock.hcl is intentionally COMMITTED (pins provider versions + hashes)
+
+# Secrets / keys
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/

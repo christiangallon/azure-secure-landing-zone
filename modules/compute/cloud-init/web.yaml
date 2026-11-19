@@ -1,0 +1,11 @@
+#cloud-config
+# Web tier: nginx serving a status page plus /health for the LB probe.
+package_update: true
+packages:
+  - nginx
+write_files:
+  - path: /var/www/html/health
+    content: "ok\n"
+runcmd:
+  - echo "<h1>azure-secure-landing-zone</h1><p>Served by $(hostname)</p>" > /var/www/html/index.html
+  - systemctl enable --now nginx

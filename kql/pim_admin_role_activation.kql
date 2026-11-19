@@ -1,0 +1,19 @@
+// -----------------------------------------------------------------------------
+// Alert 2: Privileged role activated through PIM
+// Fires whenever an eligible user activates an Entra admin role (just-in-time).
+// Activations are expected but should always be visible to the security team.
+// Table: AuditLogs (requires Entra diagnostic setting to Log Analytics)
+// MITRE ATT&CK: T1078.004 Valid Accounts: Cloud Accounts / T1098 Account Manipulation
+// Used by: modules/monitoring (scheduled query rule, window PT15M, every PT5M)
+// -----------------------------------------------------------------------------
+AuditLogs
+| where TimeGenerated > ago(15m)
+| where LoggedByService == "PIM"
+| where OperationName has "PIM activation"
+| where OperationName has "completed"
+| extend
+    Actor         = tostring(InitiatedBy.user.userPrincipalName),
+    RoleName      = tostring(TargetResources[0].displayName),
+    Justification = tostring(ResultReason)
+| project TimeGenerated, Actor, RoleName, OperationName, Result, Justification, CorrelationId
+| order by TimeGenerated desc

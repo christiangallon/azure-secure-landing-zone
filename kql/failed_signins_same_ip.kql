@@ -1,0 +1,19 @@
+// -----------------------------------------------------------------------------
+// Alert 1: Possible password spray / brute force
+// Fires when 5+ failed Entra ID sign-ins come from the same IP within 10 minutes.
+// Table: SigninLogs (requires Entra ID P1/P2 + diagnostic setting to Log Analytics)
+// MITRE ATT&CK: T1110 Brute Force (T1110.003 Password Spraying)
+// Used by: modules/monitoring (scheduled query rule, window PT10M, every PT5M)
+// -----------------------------------------------------------------------------
+SigninLogs
+| where TimeGenerated > ago(10m)
+| where ResultType != "0"                      // "0" = success; anything else is a failure
+| summarize
+    FailedAttempts = count(),
+    TargetUsers    = make_set(UserPrincipalName, 20),
+    FailureCodes   = make_set(ResultType, 10),
+    FirstSeen      = min(TimeGenerated),
+    LastSeen       = max(TimeGenerated)
+    by IPAddress
+| where FailedAttempts >= 5
+| order by FailedAttempts desc

@@ -1,0 +1,9 @@
+#cloud-config
+# DB tier: PostgreSQL listening on the private IP, accepting only the web subnet.
+package_update: true
+packages:
+  - postgresql
+runcmd:
+  - PGVER=$(ls /etc/postgresql) && echo "listen_addresses = '*'" >> /etc/postgresql/$PGVER/main/postgresql.conf
+  - PGVER=$(ls /etc/postgresql) && echo "host all all ${web_subnet_cidr} scram-sha-256" >> /etc/postgresql/$PGVER/main/pg_hba.conf
+  - systemctl restart postgresql

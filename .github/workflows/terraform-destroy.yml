@@ -1,0 +1,80 @@
+name: terraform-destroy
+
+# Manual teardown. Run at the end of EVERY lab session (Bastion, NAT gateway,
+# VMs and the load balancer bill while they exist).
+# Does NOT touch the bootstrap/ state storage.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DESTROY to confirm tearing down all landing-zone resources'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-main
+  cancel-in-progress: false
+
+env:
+  TF_VERSION: "1.9.8"
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_USE_OIDC: "true"
+  ARM_USE_AZUREAD: "true"
+
+jobs:
+  destroy:
+    name: destroy (requires approval)
+    if: github.event.inputs.confirm == 'DESTROY' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Write terraform.tfvars from secret
+        env:
+          TFVARS: ${{ secrets.TFVARS }}
+        run: |
+          if [ -z "$TFVARS" ]; then echo "::error::Repository secret TFVARS is empty - see docs/SETUP.md"; exit 1; fi
+          printf '%s\n' "$TFVARS" > terraform.tfvars
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform init
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{ vars.TF_STATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ vars.TF_STATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=azure-secure-landing-zone/dev.tfstate" \
+            -backend-config="use_azuread_auth=true"
+
+      - name: terraform destroy
+        run: terraform destroy -auto-approve -lock-timeout=5m -no-color
+
+  reject:
+    name: confirmation missing
+    if: github.event.inputs.confirm != 'DESTROY'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Confirmation input was not 'DESTROY' - nothing was destroyed."
+          exit 1

@@ -1,0 +1,22 @@
+// -----------------------------------------------------------------------------
+// Alert 3: Storage access attempt from a public IP
+// The storage account is private-endpoint only, so legitimate traffic should
+// come from private (RFC1918) addresses. Any public caller - successful or
+// denied - is worth investigating (misconfiguration or exfiltration attempt).
+// Table: StorageBlobLogs (diagnostic setting on the blob service)
+// MITRE ATT&CK: T1530 Data from Cloud Storage
+// Used by: modules/monitoring (scheduled query rule, window PT15M, every PT5M)
+// -----------------------------------------------------------------------------
+StorageBlobLogs
+| where TimeGenerated > ago(15m)
+| extend ClientIp = tostring(split(CallerIpAddress, ":")[0])   // strip :port
+| where isnotempty(ClientIp) and ClientIp != "127.0.0.1"
+| where not(ipv4_is_private(ClientIp))
+| summarize
+    Requests   = count(),
+    Operations = make_set(OperationName, 10),
+    Statuses   = make_set(StatusText, 10),
+    FirstSeen  = min(TimeGenerated),
+    LastSeen   = max(TimeGenerated)
+    by ClientIp, AccountName, AuthenticationType
+| order by Requests desc

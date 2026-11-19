@@ -1,0 +1,7 @@
+# Copy to backend.hcl (git-ignored) and fill in from `terraform output backend_hcl`
+# in bootstrap/. Then: terraform init -backend-config=backend.hcl
+resource_group_name  = "rg-slz-tfstate"
+storage_account_name = "<STATE_STORAGE_ACCOUNT_NAME>"
+container_name       = "tfstate"
+key                  = "azure-secure-landing-zone/dev.tfstate"
+use_azuread_auth     = true

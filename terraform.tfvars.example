@@ -1,0 +1,36 @@
+# Copy to terraform.tfvars (git-ignored) and replace the placeholders.
+
+subscription_id = "<SUBSCRIPTION_ID>"
+tenant_id       = "<TENANT_ID>"
+
+prefix      = "slz"
+environment = "dev"
+location    = "eastus"
+owner       = "christian-gallon"
+cost_center = "portfolio-lab"
+
+# Contents of your PUBLIC key, e.g. Get-Content $HOME\.ssh\id_ed25519.pub
+admin_ssh_public_key = "ssh-ed25519 AAAA... you@laptop"
+alert_email          = "<YOUR_EMAIL>"
+
+# Web tier
+web_vm_count        = 1                     # 2 = redundant web tier behind the LB
+allowed_http_source = "<YOUR_PUBLIC_IP>/32" # or "Internet"
+
+# Cost toggles
+enable_bastion             = true  # ~$0.19/hr while it exists
+enable_nat_gateway         = true  # ~$0.045/hr while it exists
+enable_defender_paid_plans = false # paid plans off
+enable_logic_app           = false # needs TF_VAR_notification_webhook_url
+budget_amount              = 50
+
+# Identity (Entra ID P1/P2)
+enable_identity_module   = true
+enable_entra_diagnostics = true
+trusted_ip_ranges        = ["<YOUR_PUBLIC_IP>/32"]
+ca_enforce               = false # report-only first
+break_glass_object_ids   = ["<BREAK_GLASS_USER_OBJECT_ID>"]
+
+enable_pim              = false # set true once P2 trial is active
+pim_principal_object_id = "<ADMIN_USER_OBJECT_ID>"
+pim_role_name           = "Security Administrator"
